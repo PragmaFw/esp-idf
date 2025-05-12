@@ -2,7 +2,7 @@ menu "MQTT OTA Example Configuration"
 
     config MQTT_BROKER_URI
         string "MQTT Broker URI"
-        default "mqtt://192.168.31.171:1883"
+        default "mqtt://test.mosquitto.org:1883"
         help
             URI of the MQTT broker the device connects to.
 

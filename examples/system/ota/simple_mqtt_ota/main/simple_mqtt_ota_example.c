@@ -86,7 +86,7 @@ esp_err_t finalize_ota(void)
     {
         ESP_LOGE(TAG, "OTA not properly started or no data written");
         msg_id = esp_mqtt_client_publish(mqtt_client, TOPIC_START_UPDATE, "ota not properly started", 0, 1, 0);
-        ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
+        ESP_LOGD(TAG, "sent publish successful, msg_id=%d", msg_id);
         return ESP_FAIL;
     }
 
@@ -96,7 +96,7 @@ esp_err_t finalize_ota(void)
         ESP_LOGE(TAG, "esp_ota_end failed: %s, bytes written: %d", esp_err_to_name(err),total_bytes_written);
         snprintf(buff,sizeof(buff),"esp_ota_end failed: %s", esp_err_to_name(err));
         msg_id = esp_mqtt_client_publish(mqtt_client, TOPIC_START_UPDATE, "OTA failed", 0, 1, 0);
-        ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
+        ESP_LOGD(TAG, "sent publish successful, msg_id=%d", msg_id);
         return err;
     }
 
@@ -107,19 +107,25 @@ esp_err_t finalize_ota(void)
         ESP_LOGE(TAG, "esp_ota_set_boot_partition failed: %s", esp_err_to_name(err));
         snprintf(buff,sizeof(buff),"esp_ota_set_boot_partition failed: %s, bytes written: %d", esp_err_to_name(err),total_bytes_written);
         msg_id = esp_mqtt_client_publish(mqtt_client, TOPIC_START_UPDATE, "OTA set_boot fails", 0, 1, 0);
-        ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
+        ESP_LOGD(TAG, "sent publish successful, msg_id=%d", msg_id);
         return err;
     }
     uint16_t otaTimeDelta = ((esp_timer_get_time() - timeoutotainit) / 1000000);
     snprintf(buff,sizeof(buff),"OTA successful time: %ds, bytes written: %d",otaTimeDelta,total_bytes_written);
     msg_id = esp_mqtt_client_publish(mqtt_client, TOPIC_START_UPDATE, buff, 0, 1, 0);
-    ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
+    ESP_LOGD(TAG, "sent publish successful, msg_id=%d", msg_id);
     vTaskDelay(500);
     ESP_LOGI(TAG, "OTA update successful. Rebooting...");
     esp_restart();
     return ESP_OK;
 }
 
+static void log_error_if_nonzero(const char *message, int error_code)
+{
+    if (error_code != 0) {
+        ESP_LOGE(TAG, "Last error %s: 0x%x", message, error_code);
+    }
+}
 
 /**
  * @brief Event handler registered to receive MQTT events
@@ -140,7 +146,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     switch ((esp_mqtt_event_id_t)event_id)
     {
     case MQTT_EVENT_CONNECTED:
-        ESP_LOGI(TAG, "MQTT connected");
+        ESP_LOGI(TAG, "MQTT connected to broker: %s",MQTT_BROKER_URI);
         msg_id = esp_mqtt_client_subscribe(mqtt_client, TOPIC_START_UPDATE, 0);
         ESP_LOGI(TAG, "Subscribed to topic '%s', msg_id=%d", TOPIC_START_UPDATE, msg_id);
         msg_id = esp_mqtt_client_subscribe(mqtt_client, TOPIC_DONE, 0);
@@ -195,7 +201,8 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
             }
             ota_data_written = true;
             total_bytes_written += event->data_len;
-            ESP_LOGI(TAG, "Received chunk: %d bytes (total: %d bytes)", event->data_len, total_bytes_written);
+            ESP_LOGD(TAG, "Received chunk: %d bytes", event->data_len);
+            ESP_LOGI(TAG, "Bytes received: %d bytes", total_bytes_written);
         }
 
         else if (event->topic_len == strlen(TOPIC_DONE) &&
