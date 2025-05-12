@@ -20,6 +20,8 @@ Use `idf.py menuconfig → MQTT OTA Example Configuration` to configure:
 - **Firmware Chunk Topic**: default `ota/firmware`.
 - **Done Topic**: default `ota/done`.
 
+---
+
 ## OTA Workflow
 
 The device listens for commands via the following MQTT topics:
@@ -50,6 +52,8 @@ This script can read the sdkconfig to match the broker, port and topics.
 pip install paho-mqtt
 ```
 
+---
+
 ## Notes
 
 - This example uses plain MQTT (mqtt://). For production use, consider switching to MQTTS (mqtts://) with proper certificates.
@@ -66,7 +70,11 @@ pip install paho-mqtt
 
 - The default mqtt buffer size for esp-idf is 1024 but for this example is 4096 (`CONFIG_MQTT_BUFFER_SIZE=4096`).
 
+---
+
 ## Example output
+
+### ESP UART log
 
 ```log
 I (488) simple_mqtt_ota_example: [APP] Startup..
@@ -111,6 +119,8 @@ I (139148) esp_image: segment 4: paddr=0028f690 vaddr=3ffb0aa4 size=0339ch ( 132
 I (139158) esp_image: segment 5: paddr=00292a34 vaddr=40080000 size=17cc4h ( 97476)
 I (144268) simple_mqtt_ota_example: OTA update successful. Rebooting...
 ```
+
+### MQTT Messages log
 
 ```log 
 Topic ota/done message: done.
